@@ -1,0 +1,209 @@
+.TH "PING" "8" "1 May 2012" "ping" "System Manager's Manual: ping"
+.SH NAME
+ping \- send ICMP or ICMP6 ECHO_REQUEST to network hosts
+.SH SYNOPSIS
+
+\fBping\fR [\fB-AbBfhnqRrV\fR] [\fB-c \fIcount\fB\fR] [\fB-i \fIinterval\fB\fR] [\fB-I \fIinterface\fB\fR]
+.br
+[\fB-l \fIpreload\fB\fR] [\fB-s \fIpacketsize\fB\fR] [\fB-S \fIsendbuf\fB\fR] [\fB-t \fIttl\fB\fR] [\fB-w \fIdeadline\fB\fR]
+.br
+[\fB-W \fItimeout\fB\fR] [\fB-g \fI<source routes>\fB\fR] <\fB\fIdestination\fB\fR>
+
+.SH "DESCRIPTION"
+.PP
+\fBping\fR uses the ICMP an ICMP6 protocol's mandatory ECHO_REQUEST
+datagram to elicit an ICMP ECHO_RESPONSE from a host or gateway.
+ECHO_REQUEST datagrams (``pings'') have an IP and ICMP
+header, followed by a struct timeval and then an arbitrary
+number of ``pad'' bytes used to fill out the packet.
+.SH "OPTIONS"
+.TP
+\fB-A\fR
+Adaptive ping. Interpacket interval adapts to round-trip time, so that
+effectively not more than one (or more, if preload is set) unanswered probes
+present in the network. Minimal interval is 200msec for not super-user.
+On networks with low rtt this mode is essentially equivalent to flood mode.  
+.TP
+\fB-b\fR
+Allow pinging a broadcast address.
+.TP
+\fB-B\fR
+Do not allow \fBping\fR to change source address of probes.
+The address is bound to one selected when \fBping\fR starts.
+.TP
+\fB-c \fIcount\fB\fR
+Stop after sending \fIcount\fR ECHO_REQUEST
+packets. With 
+\fIdeadline\fR
+option, \fBping\fR waits for
+\fIcount\fR ECHO_REPLY packets, until the timeout expires.
+.TP
+\fB-f\fR
+Flood ping. For every ECHO_REQUEST sent a period ``.'' is printed,
+while for ever ECHO_REPLY received a backspace is printed.
+This provides a rapid display of how many packets are being dropped.
+If interval is not given, it sets interval to zero and
+outputs packets as fast as they come back or one hundred times per second,
+whichever is more.
+Only the super-user may use this option with zero interval.
+.TP
+\fB-i \fIinterval\fB\fR
+Wait \fIinterval\fR seconds between sending each packet.
+The default is to wait for one second between each packet normally,
+or not to wait in flood mode. Only super-user may set interval
+to values less 0.2 seconds.
+.TP
+\fB-I \fIinterface address\fB\fR
+Set source address to specified interface address. Argument
+may be numeric IP address or name of device. When pinging IPv6
+link-local address this option is required.
+.TP
+\fB-l \fIpreload\fB\fR
+If \fIpreload\fR is specified,
+\fBping\fR sends that many packets not waiting for reply.
+Only the super-user may select preload more than 3.
+.TP
+\fB-n\fR
+Numeric output only.
+No attempt will be made to lookup symbolic names for host addresses.
+.TP
+\fB-q\fR
+Quiet output.
+Nothing is displayed except the summary lines at startup time and
+when finished.
+.TP
+\fB-R\fR
+Record route.
+Includes the RECORD_ROUTE option in the ECHO_REQUEST
+packet and displays the route buffer on returned packets.
+Note that the IP header is only large enough for nine such routes.
+Many hosts ignore or discard this option.
+.TP
+\fB-r\fR
+Bypass the normal routing tables and send directly to a host on an attached
+interface.
+If the host is not on a directly-attached network, an error is returned.
+This option can be used to ping a local host through an interface
+that has no route through it provided the option \fB-I\fR is also
+used.
+.TP
+\fB-s \fIpacketsize\fB\fR
+Specifies the number of data bytes to be sent.  
+The default is 56, which translates into 64 ICMP
+data bytes when combined with the 8 bytes of ICMP header data.
+.TP
+\fB-S \fIsndbuf\fB\fR
+Set socket sndbuf. If not specified, it is just selected by kernal
+.TP
+\fB-t \fIttl\fB\fR
+Set the IP Time to Live.
+.TP
+\fB-V\fR
+Show version and exit.
+.TP
+\fB-w \fIdeadline\fB\fR
+Specify a timeout, in seconds, before
+\fBping\fR
+exits regardless of how many
+packets have been sent or received. In this case
+\fBping\fR
+does not stop after
+\fIcount\fR
+packet are sent, it waits either for
+\fIdeadline\fR
+expire or until
+\fIcount\fR
+probes are answered or for some error notification from network.   
+.TP
+\fB-W \fItimeout\fB\fR
+Time to wait for a response, in seconds. The option affects only timeout
+in absense of any responses, otherwise \fBping\fR waits for two RTTs.
+.SH "IPv6"
+.PP
+\fBping\fR will auto recogonize the family of destination adderss,
+and send proper icmp request packet. but you should notice below:
+.TP 0.2i
+\(bu
+Could not ping a IPv4-mapped IPv6 address
+.TP 0.2i
+\(bu
+IPv6 do not support broadcast ping
+.SH "SIGNALS"
+.PP
+When the specified number of packets have been sent (and received),
+or if the program is terminated with a SIGINT, a brief summary is displayed.
+Shorter current statistics can be obtained without termination of process
+with signal SIGQUIT.
+.SH "EXAMPLE"
+.PP
+ping localhost
+
+.br
+	IPv4:	ping 127.0.0.1
+.br
+	IPv6:	ping ::1
+.br
+
+.PP
+.SH "DUPLICATE AND ERROR PACKETS"
+.PP
+\fBping\fR will report duplicate and damaged packets.
+Duplicate packets should never occur, and seem to be caused by
+inappropriate link-level retransmissions.
+Duplicates may occur in many situations and are rarely (if ever) a
+good sign, although the presence of low levels of duplicates may not
+always be cause for alarm.
+.PP
+Error icmp packets will also be reported, such as net or host error.
+.SH "RETURN VALUE"
+.TP 0.2i
+\(bu
+All or specialed count packets ping success:
+.br
+	normal terminalled, return 0.
+.br
+	error terminalled,  return 1.
+.br
+.TP 0.2i
+\(bu
+Part of packets ping success:
+.br
+	normal terminalled, return 2.
+.br
+	error terminalled,  return 3.
+.br
+.TP 0.2i
+\(bu
+None packet ping success:
+.br
+	normal terminalled, return 0.
+.br
+	error terminalled,  return 4.
+.PP
+None packet ping success means sent serveral packets but response none.
+if not sent any packet, then it is considered as all packets ping success.
+.SH "BUGS"
+.TP 0.2i
+\(bu
+Many Hosts and Gateways ignore the RECORD_ROUTE option.
+.TP 0.2i
+\(bu
+The maximum IP header length is too small for options like
+RECORD_ROUTE to be completely useful.
+There's not much that that can be done about this, however.
+.TP 0.2i
+\(bu
+Flood pinging is not recommended in general, and flood pinging the
+broadcast address should only be done under very controlled conditions.
+.SH "SECURITY"
+.PP
+\fBping\fR requires CAP_NET_RAWIO capability
+to be executed. It may be used as set-uid root.
+.SH "SEE ALSO"
+.PP
+\fBnetstat\fR(1),
+\fBifconfig\fR(8).
+.SH "AUTHOR"
+.PP
+this \fBping\fR tool is written by guofeng1208@163.com
+
